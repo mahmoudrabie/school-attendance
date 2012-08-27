@@ -1,5 +1,22 @@
+# todo
+# in students check if today -- don't allow forward from today
+# read only UI in students if not today
+# enforce read only if not today in attend
+# CSS gray out if not attending, only show cross sign if attending, and tick if not attending
+# reporting interface - cron job to export to a spreadsheet
+# Use closure to do ajax instead of attend post
+# check how UI looks in web browser emulating android
+# get my spare android running to test
+# figure out how to handle login on android
+# set up short cut on desktop, android
+# handle time zones correct (from account api?)
+# do not create attendance record if no one attending
+# load data to prod system from ~/appengine/python_apps/sfschoolhouse.db
+# log when anyone changes attendance - name and what done
+
 import os
 import datetime
+import logging
 
 from google.appengine.ext import ndb
 from google.appengine.ext import webapp
@@ -80,16 +97,15 @@ class Attend(webapp.RequestHandler):
 
 class LoadData(webapp.RequestHandler):
   def get(self):
-    john = Student(first_name='John', last_name='Lennon')
-    paul = Student(first_name='Paul', last_name='McCartney')
-    george = Student(first_name='George', last_name='Harrison')
-    ringo = Student(first_name='Ringo', last_name='Starr')
-    john_key = john.put()
-    paul_key = paul.put()
-    george_key = george.put()
-    ringo_key = ringo.put()
-    music = Class(name='Music', enrolled=[john_key, paul_key, george_key, ringo_key])
-    music.put()
+    students = []
+    student_list = []
+    for name in students:
+      first_name, last_name = name.split()
+      student = Student(first_name=first_name, last_name=last_name)
+      student_key = student.put()
+      student_list.append(student_key)
+    the_class = Class(name='K-2 2012-13', enrolled=student_list)
+    the_class.put()
     self.response.out.write('done')
 
 
