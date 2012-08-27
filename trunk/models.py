@@ -8,6 +8,5 @@ class Class(ndb.Model):
   name = ndb.StringProperty()
   enrolled = ndb.KeyProperty(repeated=True)
 
-class Date(ndb.Model):
-  date = ndb.DateProperty()
+class Attendance(ndb.Model):
   attending = ndb.KeyProperty(repeated=True)

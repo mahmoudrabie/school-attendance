@@ -7,6 +7,7 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 from google.appengine.api import users
 
+from models import Attendance
 from models import Class
 from models import Student
 
@@ -35,10 +36,12 @@ class Students(webapp.RequestHandler):
     class_id = self.request.get('class_id')
     date = self.request.get('date')
     if date:
+      the_date = datetime.datetime.fromtimestamp(int(date))
+    else:
       # TODO handle time zone conversions needed because appengine dates are in GMT
       the_date = datetime.datetime.now()
-    else:
-      the_date = datetime.datetime.now()
+    after = the_date + datetime.timedelta(days=1)
+    before = the_date - datetime.timedelta(days=1)
     class_key = ndb.Key('Class', int(class_id))
     the_class = class_key.get()
     the_class.id = the_class.key.id()
@@ -49,10 +52,30 @@ class Students(webapp.RequestHandler):
     template_values = { 'students': students,
                         'class': the_class,
                         'the_date': the_date,
+                        'before': before,
+                        'after': after,
                         'username': user.nickname(),
                         'logout': users.create_logout_url("/") }
     path = os.path.join(os.path.dirname(__file__), 'templates/students.html')
     self.response.out.write(template.render(path, template_values))
+
+
+class Attend(webapp.RequestHandler):
+  def post(self):
+    user = users.get_current_user()
+    class_id = self.request.get('class_id')
+    student_id = self.request.get('student_id')
+    student_key = ndb.Key('Student', int(student_id))
+    date = self.request.get('date')
+    attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date))
+    attendance = attendance_key.get()
+    if attendance:
+      if student_key not in attendance.attending:
+        attendance.attending.append(student_key)
+    else:
+      attendance = Attendance(key=attendance_key, attending=[student_key])
+      attendance.put()
+    self.redirect('/students?class_id=%s&date=%s' % (class_id, date))
 
 
 class LoadData(webapp.RequestHandler):
@@ -71,7 +94,8 @@ class LoadData(webapp.RequestHandler):
 
 
 application = webapp.WSGIApplication(
-  [('/classes', Classes), ('/students', Students), ('/loaddata', LoadData),],
+  [('/classes', Classes), ('/students', Students), ('/attend', Attend), 
+   ('/loaddata', LoadData),],
   debug=True)
 
 def main():
