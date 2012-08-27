@@ -1,0 +1,9 @@
+<html>
+  <body>
+    {{ username }} (<a href="{{ logout }}">logout</a>)<br/>
+    <h2>Classes</h2>
+    {% for class in classes %}
+      <a href="/students?class_id={{ class.id }}">{{ class.name }}</a> <br/>
+    {% endfor %}
+  </body>
+</html>
