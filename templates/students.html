@@ -1,21 +1,23 @@
 <html>
   <body>
     {{ username }} (<a href="{{ logout }}">logout</a>)<br/>
-    <a href="/students?class={{ class.id }}&date=&offset=-1">&lt;&lt;</a>
+    <a href="/students?class_id={{ class.id }}&date={{ before|date:"U" }}">&lt;&lt;</a>
     {{ the_date|date:"D d M Y T O" }}
-    <a href="/students?class={{ class.id }}&date=&offset=1">&gt;&gt;</a>
+    <a href="/students?class_id={{ class.id }}&date={{ after|date:"U" }}">&gt;&gt;</a>
     <br/>
 
     <h2>Class: {{class.name }}</h2>
     <table>
     {% for student in students %}
       <tr><td>
-      <form action="/attend" method="get">
+      <form action="/attend" method="POST">
       {{ student.first_name }} {{ student.last_name }}
       </td><td>
 	<input type="hidden" name="date" value="{{ the_date|date:"U" }}">
-	<input type="hidden" name="student" value="{{ class.id }}">
-        <input type="submit" value="&#x2713;">
+	<input type="hidden" name="class_id" value="{{ class.id }}">
+	<input type="hidden" name="student_id" value="{{ student.id }}">
+        <input type="submit" name="yes" value="&#x2713;">
+        <input type="submit" name="no" value="X">
       </form>
       </td></tr>
     {% endfor %}
