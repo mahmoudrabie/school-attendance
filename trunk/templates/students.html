@@ -1,27 +1,66 @@
 <html>
+  <head>
+    <style 'type=text/css'>
+      body {
+        font-family:arial;
+      }
+      form {
+        display: inline;
+      }
+      .absent {
+        color:gray;
+      }
+      .present {
+        font-weight:bold;
+      }
+    </style>
+  </head>
+
   <body>
     {{ username }} (<a href="{{ logout }}">logout</a>)<br/>
-    <a href="/students?class_id={{ class.id }}&date={{ before|date:"U" }}">&lt;&lt;</a>
-    {{ the_date|date:"D d M Y T O" }}
-    <a href="/students?class_id={{ class.id }}&date={{ after|date:"U" }}">&gt;&gt;</a>
+    <form action="/students" method="GET">
+    <input type="hidden" name="class_id" value="{{ class.id }}">
+    <input type="hidden" name="date" value="{{ date_ordinal|add:"-1" }}">
+    <input type="submit" value="&lt;">
+    </form>
+    {{ date_struct|date:"D d M Y" }}
+    {% if not today %}
+    <form action="/students" method="GET">
+    <input type="hidden" name="class_id" value="{{ class.id }}">
+    <input type="hidden" name="date" value="{{ date_ordinal|add:"1" }}">
+    <input type="submit" value="&gt;">
+    </form>
+    {% endif %}
     <br/>
 
     <h2>Class: {{class.name }}</h2>
     <table>
     {% for student in students %}
-      <tr><td>
-      <form action="/attend" method="POST">
-      {{ student.first_name }} {{ student.last_name }}
-      </td><td>
-	<input type="hidden" name="date" value="{{ the_date|date:"U" }}">
-	<input type="hidden" name="class_id" value="{{ class.id }}">
-	<input type="hidden" name="student_id" value="{{ student.id }}">
-        <input type="submit" name="yes" value="&#x2713;">
-        <input type="submit" name="no" value="X">
-      </form>
-      </td></tr>
+      {% if student.present %}
+      <tr class="present">
+      {% else %}
+      <tr class="absent">
+      {% endif %}
+        <td>
+          {{ student.first_name }} {{ student.last_name }}
+        </td>
+	<td>
+          {% if today %}
+          <form action="/attend" method="POST">
+	    <input type="hidden" name="date" value="{{ date_ordinal }}">
+            <input type="hidden" name="class_id" value="{{ class.id }}">
+	    <input type="hidden" name="student_id" value="{{ student.id }}">
+	    {% if student.present %}
+            <input type="submit" name="no" value="X">
+	    {% else %}
+            <input type="submit" name="yes" value="&#x2713;">
+	    {% endif %}
+
+	  </form>
+          {% endif %} 
+       </td>
+      </tr>
     {% endfor %}
     </table>
-
   </body>
 </html>

@@ -1,8 +1,4 @@
 # todo
-# in students check if today -- don't allow forward from today
-# read only UI in students if not today
-# enforce read only if not today in attend
-# CSS gray out if not attending, only show cross sign if attending, and tick if not attending
 # reporting interface - cron job to export to a spreadsheet
 # Use closure to do ajax instead of attend post
 # check how UI looks in web browser emulating android
@@ -10,9 +6,9 @@
 # figure out how to handle login on android
 # set up short cut on desktop, android
 # handle time zones correct (from account api?)
-# do not create attendance record if no one attending
 # load data to prod system from ~/appengine/python_apps/sfschoolhouse.db
 # log when anyone changes attendance - name and what done
+# separate CSS file
 
 import os
 import datetime
@@ -51,26 +47,36 @@ class Students(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
     class_id = self.request.get('class_id')
-    date = self.request.get('date')
-    if date:
-      the_date = datetime.datetime.fromtimestamp(int(date))
-    else:
+    date_ordinal = self.request.get('date')
+    if not date_ordinal:
       # TODO handle time zone conversions needed because appengine dates are in GMT
-      the_date = datetime.datetime.now()
-    after = the_date + datetime.timedelta(days=1)
-    before = the_date - datetime.timedelta(days=1)
+      date_ordinal = datetime.date.today().toordinal()
+    date_struct = datetime.date.fromordinal(int(date_ordinal))
+    if date_struct == datetime.datetime.today().date():
+      today = True
+    else:
+      today = False
     class_key = ndb.Key('Class', int(class_id))
     the_class = class_key.get()
     the_class.id = the_class.key.id()
+    attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
+    attendance = attendance_key.get()
     students = ndb.get_multi(the_class.enrolled)
     students.sort(key= lambda x: x.first_name, reverse=False)
     for student in students:
       student.id = student.key.id()
+      if attendance:
+        if student.key in attendance.attending:
+          student.present = True
+        else:
+          student.present = False
+      else:
+        student.present = False
     template_values = { 'students': students,
+                        'date_ordinal': date_ordinal,
+                        'today': today,
                         'class': the_class,
-                        'the_date': the_date,
-                        'before': before,
-                        'after': after,
+                        'date_struct': date_struct,
                         'username': user.nickname(),
                         'logout': users.create_logout_url("/") }
     path = os.path.join(os.path.dirname(__file__), 'templates/students.html')
@@ -80,19 +86,35 @@ class Students(webapp.RequestHandler):
 class Attend(webapp.RequestHandler):
   def post(self):
     user = users.get_current_user()
+    yes = self.request.get('yes')
     class_id = self.request.get('class_id')
     student_id = self.request.get('student_id')
     student_key = ndb.Key('Student', int(student_id))
-    date = self.request.get('date')
-    attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date))
-    attendance = attendance_key.get()
+    student = student_key.get()
+    date_ordinal = self.request.get('date')
+    date_struct = datetime.date.fromordinal(int(date_ordinal))
+    class_key = ndb.Key('Class', int(class_id))
+    the_class = class_key.get()
+    # TODO: allow admins to change attendance for other days
+    if date_struct == datetime.datetime.today().date():
+      attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
+      attendance = attendance_key.get()
+      if attendance:
+        if yes and student_key not in attendance.attending:
+          attendance.attending.append(student_key)
+        if not yes and student_key in attendance.attending:
+          attendance.attending.remove(student_key)
+      else:
+        if yes:
+          attendance = Attendance(key=attendance_key, attending=[student_key])
     if attendance:
-      if student_key not in attendance.attending:
-        attendance.attending.append(student_key)
-    else:
-      attendance = Attendance(key=attendance_key, attending=[student_key])
+      if yes:
+        status = "present"
+      else:
+        status = "absent"
+      logging.info('Change by %s: %s %s marked as %s for %s' % (user.nickname(), student.first_name, student.last_name, status, the_class.name))
       attendance.put()
-    self.redirect('/students?class_id=%s&date=%s' % (class_id, date))
+    self.redirect('/students?class_id=%s&date=%s' % (class_id, date_ordinal))
 
 
 class LoadData(webapp.RequestHandler):
