@@ -1,5 +1,5 @@
 application: school-attendance
-version: 1
+version: prod
 runtime: python
 api_version: 1
 
@@ -8,6 +8,10 @@ handlers:
 - url: /favicon.ico
   static_files: static/images/school-bell-favicon.ico
   upload: static/images/school-bell-favicon.ico
+
+- url: /attendance.css
+  static_files: static/css/attendance.css
+  upload: static/css/attendance.css
 
 - url: /
   static_files: static/html/index.html

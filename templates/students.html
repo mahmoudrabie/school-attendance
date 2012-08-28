@@ -1,23 +1,9 @@
 <html>
   <head>
-    <style 'type=text/css'>
-      body {
-        font-family:arial;
-      }
-      form {
-        display: inline;
-      }
-      .absent {
-        color:gray;
-      }
-      .present {
-        font-weight:bold;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/attendance.css" />
   </head>
-
   <body>
-    {{ username }} (<a href="{{ logout }}">logout</a>)<br/>
+    User: {{ username }}<br/>
     <form action="/students" method="GET">
     <input type="hidden" name="class_id" value="{{ class.id }}">
     <input type="hidden" name="date" value="{{ date_ordinal|add:"-1" }}">

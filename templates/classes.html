@@ -1,6 +1,9 @@
 <html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="/attendance.css" />
+  </head>
   <body>
-    {{ username }} (<a href="{{ logout }}">logout</a>)<br/>
+    User: {{ username }}<br/>
     <h2>Classes</h2>
     {% for class in classes %}
       <a href="/students?class_id={{ class.id }}">{{ class.name }}</a> <br/>

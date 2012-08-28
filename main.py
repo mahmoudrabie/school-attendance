@@ -7,8 +7,8 @@
 # set up short cut on desktop, android
 # handle time zones correct (from account api?)
 # load data to prod system from ~/appengine/python_apps/sfschoolhouse.db
-# log when anyone changes attendance - name and what done
-# separate CSS file
+# prod and dev versions
+# need to ensure accessed as attendance.sfschoolhouse.org if logged in as a schoolhouse.org user
 
 import os
 import datetime
@@ -32,7 +32,7 @@ class Classes(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
     query = Class.query()
-    # TODO: handle case with >20 classes
+    # TODO: handle school with >20 classes
     classes = query.fetch(20)
     for the_class in classes:
       the_class.id = the_class.key.id()
@@ -112,7 +112,8 @@ class Attend(webapp.RequestHandler):
         status = "present"
       else:
         status = "absent"
-      logging.info('Change by %s: %s %s marked as %s for %s' % (user.nickname(), student.first_name, student.last_name, status, the_class.name))
+      logging.info('Change by %s: %s %s marked as %s for %s' % 
+                   (user.nickname(), student.first_name, student.last_name, status, the_class.name))
       attendance.put()
     self.redirect('/students?class_id=%s&date=%s' % (class_id, date_ordinal))
 
