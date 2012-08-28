@@ -1,0 +1,21 @@
+body {
+  font-family: arial;
+  font-size: 250%;
+}
+form {
+  display: inline;
+}
+.absent {
+  color: gray;
+  font-size: 250%;
+}
+.present {
+  font-weight: bold;
+  font-size: 250%;
+}
+input {
+  font-size: 150%;
+}
+td {
+  padding: 10px;
+}
