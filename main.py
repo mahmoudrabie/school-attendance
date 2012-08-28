@@ -1,5 +1,6 @@
 # todo
 # reporting interface - cron job to export to a spreadsheet
+# http://code.google.com/p/gdata-python-client/source/browse/#hg%2Fsamples%2Foauth%2Foauth_on_appengine%253Fstate%253Dclosed
 # Use closure to do ajax instead of attend post
 # check how UI looks in web browser emulating android
 # get my spare android running to test
@@ -11,6 +12,9 @@
 # need to ensure accessed as attendance.sfschoolhouse.org if logged in as a schoolhouse.org user
 # security check that user login domain matches namespace
 # allow anyone to test Music, Football, etc. on appspot.com
+# track number of hours per day - total num hours single field
+# unit tests, integration tests
+# code readability
 
 import os
 import datetime
