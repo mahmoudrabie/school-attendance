@@ -9,6 +9,8 @@
 # load data to prod system from ~/appengine/python_apps/sfschoolhouse.db
 # prod and dev versions
 # need to ensure accessed as attendance.sfschoolhouse.org if logged in as a schoolhouse.org user
+# security check that user login domain matches namespace
+# allow anyone to test Music, Football, etc. on appspot.com
 
 import os
 import datetime
