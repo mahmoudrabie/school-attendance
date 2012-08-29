@@ -1,5 +1,5 @@
 application: school-attendance
-version: prod
+version: dev
 runtime: python
 api_version: 1
 
@@ -19,6 +19,10 @@ handlers:
   
 - url: /_ereporter.*
   script: $PYTHON_LIB/google/appengine/ext/ereporter/report_generator.py
+  login: admin
+
+- url: /load/*
+  script: load_data.py
   login: admin
 
 - url: /.*

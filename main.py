@@ -6,11 +6,9 @@
 # get my spare android running to test
 # figure out how to handle login on android
 # set up short cut on desktop, android
-# handle time zones correct (from account api?)
+# test time zones using remote api
 # load data to prod system from ~/appengine/python_apps/sfschoolhouse.db
-# prod and dev versions
 # need to ensure accessed as attendance.sfschoolhouse.org if logged in as a schoolhouse.org user
-# security check that user login domain matches namespace
 # allow anyone to test Music, Football, etc. on appspot.com
 # track number of hours per day - total num hours single field
 # unit tests, integration tests
@@ -25,10 +23,12 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 from google.appengine.api import users
+from google.appengine.api import namespace_manager
 
 from models import Attendance
 from models import Class
 from models import Student
+from pytz import timezone
 
 from google.appengine.dist import use_library
 use_library('django', '1.2')
@@ -37,9 +37,14 @@ use_library('django', '1.2')
 class Classes(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
+    name, user_domain = user.email()
+    namespace = namespace_manager.get_namespace()
+    if namespace and namespace != user_domain:
+      self.error(403)
+      return
     query = Class.query()
-    # TODO: handle school with >20 classes
-    classes = query.fetch(20)
+    # Max classes that can be handled is 50 per school
+    classes = query.fetch(50)
     for the_class in classes:
       the_class.id = the_class.key.id()
     template_values = { 'classes': classes,
@@ -52,19 +57,25 @@ class Classes(webapp.RequestHandler):
 class Students(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
+    name, user_domain = user.email()
+    if namespace_manager.get_namespace() != user_domain:
+      self.error(403)
+      return
     class_id = self.request.get('class_id')
+    class_key = ndb.Key('Class', int(class_id))
+    the_class = class_key.get()
+    the_class.id = the_class.key.id()
     date_ordinal = self.request.get('date')
     if not date_ordinal:
-      # TODO handle time zone conversions needed because appengine dates are in GMT
-      date_ordinal = datetime.date.today().toordinal()
+      utc_time = datetime.datetime.now()
+      tz = the_class.timezone
+      local_time = utc_time.astimezone(tz)
+      date_ordinal = localtime.date().toordinal()
     date_struct = datetime.date.fromordinal(int(date_ordinal))
     if date_struct == datetime.datetime.today().date():
       today = True
     else:
       today = False
-    class_key = ndb.Key('Class', int(class_id))
-    the_class = class_key.get()
-    the_class.id = the_class.key.id()
     attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
     attendance = attendance_key.get()
     students = ndb.get_multi(the_class.enrolled)
@@ -92,6 +103,10 @@ class Students(webapp.RequestHandler):
 class Attend(webapp.RequestHandler):
   def post(self):
     user = users.get_current_user()
+    name, user_domain = user.email()
+    if namespace_manager.get_namespace() != user_domain:
+      self.error(403)
+      return
     yes = self.request.get('yes')
     class_id = self.request.get('class_id')
     student_id = self.request.get('student_id')
@@ -124,23 +139,8 @@ class Attend(webapp.RequestHandler):
     self.redirect('/students?class_id=%s&date=%s' % (class_id, date_ordinal))
 
 
-class LoadData(webapp.RequestHandler):
-  def get(self):
-    students = []
-    student_list = []
-    for name in students:
-      first_name, last_name = name.split()
-      student = Student(first_name=first_name, last_name=last_name)
-      student_key = student.put()
-      student_list.append(student_key)
-    the_class = Class(name='K-2 2012-13', enrolled=student_list)
-    the_class.put()
-    self.response.out.write('done')
-
-
 application = webapp.WSGIApplication(
-  [('/classes', Classes), ('/students', Students), ('/attend', Attend), 
-   ('/loaddata', LoadData),],
+  [('/classes', Classes), ('/students', Students), ('/attend', Attend),],
   debug=True)
 
 def main():
