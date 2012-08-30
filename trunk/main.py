@@ -13,7 +13,11 @@
 # track number of hours per day - total num hours single field
 # unit tests, integration tests
 # code readability
-
+# Handle Sunset ecare:
+#  - List of parents working
+#  - Need to have max attendance, which is dynamic depending on parents working
+#  - Parents work every other week, so complex schedules.
+#  - Kids need to be marked if parent attended, since different price
 import os
 import datetime
 import logging
@@ -83,6 +87,7 @@ class Students(webapp.RequestHandler):
     for student in students:
       student.id = student.key.id()
       if attendance:
+        # need to change this... since attendance is no a data structure
         if student.key in attendance.attending:
           student.present = True
         else:
