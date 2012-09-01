@@ -6,7 +6,7 @@ class Student(ndb.Model):
 
 class Class(ndb.Model):
   name = ndb.StringProperty(required=True)
-  enrolled = ndb.KeyProperty(required=True, repeated=True)
+  enrolled = ndb.KeyProperty(repeated=True)
   default_hours = ndb.FloatProperty(default=None)
   timezone = ndb.StringProperty(default='US/Pacific')
 

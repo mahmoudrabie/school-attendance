@@ -18,6 +18,7 @@
 #  - Need to have max attendance, which is dynamic depending on parents working
 #  - Parents work every other week, so complex schedules.
 #  - Kids need to be marked if parent attended, since different price
+# allow admins to change attendance for other days
 import os
 import datetime
 import logging
@@ -32,7 +33,10 @@ from google.appengine.api import namespace_manager
 from models import Attendance
 from models import Class
 from models import Student
+from models import StudentPresent
+
 from pytz import timezone
+from pytz import utc
 
 from google.appengine.dist import use_library
 use_library('django', '1.2')
@@ -41,9 +45,9 @@ use_library('django', '1.2')
 class Classes(webapp.RequestHandler):
   def get(self):
     user = users.get_current_user()
-    name, user_domain = user.email()
+    name, user_domain = user.email().split('@')
     namespace = namespace_manager.get_namespace()
-    if namespace and namespace != user_domain:
+    if user_domain != 'example.com' and namespace_manager.get_namespace() != user_domain:
       self.error(403)
       return
     query = Class.query()
@@ -59,10 +63,18 @@ class Classes(webapp.RequestHandler):
 
 
 class Students(webapp.RequestHandler):
+
+  def today_as_ordinal(self, the_timezone):
+    naive_time = datetime.datetime.now()
+    utc_time = utc.localize(naive_time)
+    tz = timezone(the_timezone)
+    local_time = utc_time.astimezone(tz)
+    return local_time.date().toordinal()
+
   def get(self):
     user = users.get_current_user()
-    name, user_domain = user.email()
-    if namespace_manager.get_namespace() != user_domain:
+    name, user_domain = user.email().split('@')
+    if user_domain != 'example.com' and namespace_manager.get_namespace() != user_domain:
       self.error(403)
       return
     class_id = self.request.get('class_id')
@@ -70,30 +82,28 @@ class Students(webapp.RequestHandler):
     the_class = class_key.get()
     the_class.id = the_class.key.id()
     date_ordinal = self.request.get('date')
+    today_as_ordinal = self.today_as_ordinal(the_class.timezone)
     if not date_ordinal:
-      utc_time = datetime.datetime.now()
-      tz = the_class.timezone
-      local_time = utc_time.astimezone(tz)
-      date_ordinal = localtime.date().toordinal()
-    date_struct = datetime.date.fromordinal(int(date_ordinal))
-    if date_struct == datetime.datetime.today().date():
+      date_ordinal = today_as_ordinal
+    if int(date_ordinal) == today_as_ordinal:
       today = True
     else:
       today = False
+    date_struct = datetime.date.fromordinal(int(date_ordinal))
     attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
     attendance = attendance_key.get()
     students = ndb.get_multi(the_class.enrolled)
     students.sort(key= lambda x: x.first_name, reverse=False)
     for student in students:
+      student.present = False
+      student.hours = the_class.default_hours
       student.id = student.key.id()
       if attendance:
-        # need to change this... since attendance is no a data structure
-        if student.key in attendance.attending:
-          student.present = True
-        else:
-          student.present = False
-      else:
-        student.present = False
+        for student_present in attendance.attending:
+          if student_present.student == student.key:
+            student.present = True
+            student.hours = student_present.hours
+            break
     template_values = { 'students': students,
                         'date_ordinal': date_ordinal,
                         'today': today,
@@ -106,10 +116,39 @@ class Students(webapp.RequestHandler):
 
 
 class Attend(webapp.RequestHandler):
+
+  def today_as_ordinal(self, the_timezone):
+    naive_time = datetime.datetime.now()
+    utc_time = utc.localize(naive_time)
+    tz = timezone(the_timezone)
+    local_time = utc_time.astimezone(tz)
+    return local_time.date().toordinal()
+
+  def add_student(self, student_key, hours, attending_list):
+    student_already_present = False
+    if attending_list:
+      for student_present in attending_list:
+        if student_present.student == student_key:
+          student_already_present = True
+          break
+    if not student_already_present or not attending_list:
+      if hours:
+        hours = float(hours)
+      else:
+        hours = None
+      attending_list.append(StudentPresent(student=student_key, hours=hours))
+
+  def remove_student(self, student_key, attending_list):
+    if attending_list:
+      for student_present in attending_list:
+        if student_present.student == student_key:
+          attending_list.remove(student_present)
+          break
+
   def post(self):
     user = users.get_current_user()
-    name, user_domain = user.email()
-    if namespace_manager.get_namespace() != user_domain:
+    name, user_domain = user.email().split('@')
+    if user_domain != 'example.com' and namespace_manager.get_namespace() != user_domain:
       self.error(403)
       return
     yes = self.request.get('yes')
@@ -121,18 +160,22 @@ class Attend(webapp.RequestHandler):
     date_struct = datetime.date.fromordinal(int(date_ordinal))
     class_key = ndb.Key('Class', int(class_id))
     the_class = class_key.get()
-    # TODO: allow admins to change attendance for other days
-    if date_struct == datetime.datetime.today().date():
+    hours = self.request.get('hours')
+    today_as_ordinal = self.today_as_ordinal(the_class.timezone)
+    if int(date_ordinal) == today_as_ordinal:
       attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
       attendance = attendance_key.get()
+      attendance_already_exists = False
       if attendance:
-        if yes and student_key not in attendance.attending:
-          attendance.attending.append(student_key)
-        if not yes and student_key in attendance.attending:
-          attendance.attending.remove(student_key)
+        attendance_already_exists = True
+        if yes:
+          self.add_student(student_key, hours, attendance.attending)
+        else:
+          self.remove_student(student_key, attendance.attending)
       else:
         if yes:
-          attendance = Attendance(key=attendance_key, attending=[student_key])
+          attendance = Attendance(key=attendance_key, attending=[])
+          self.add_student(student_key, hours, attendance.attending)
     if attendance:
       if yes:
         status = "present"
@@ -140,12 +183,19 @@ class Attend(webapp.RequestHandler):
         status = "absent"
       logging.info('Change by %s: %s %s marked as %s for %s' % 
                    (user.nickname(), student.first_name, student.last_name, status, the_class.name))
+    if attendance.attending:
       attendance.put()
+    elif attendance_already_exists:
+      attendance_key.delete()
     self.redirect('/students?class_id=%s&date=%s' % (class_id, date_ordinal))
+
+class Logout(webapp.RequestHandler):
+  def get(self):
+    self.response.out.write('<a href="' + users.create_logout_url("/") + '">logout</a>')
 
 
 application = webapp.WSGIApplication(
-  [('/classes', Classes), ('/students', Students), ('/attend', Attend),],
+  [('/classes', Classes), ('/students', Students), ('/attend', Attend), ('/logout', Logout),],
   debug=True)
 
 def main():

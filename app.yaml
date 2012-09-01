@@ -21,7 +21,7 @@ handlers:
   script: $PYTHON_LIB/google/appengine/ext/ereporter/report_generator.py
   login: admin
 
-- url: /load/*
+- url: /load/.*
   script: load_data.py
   login: admin
 

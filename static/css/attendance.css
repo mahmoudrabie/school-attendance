@@ -19,3 +19,11 @@ input {
 td {
   padding: 10px;
 }
+.input_absent {
+  color: gray;
+  font-size: 150%;
+}
+.input_present {
+  font-weight: bold;
+  font-size: 150%;
+}
