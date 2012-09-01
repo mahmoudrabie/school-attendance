@@ -6,7 +6,6 @@
 # get my spare android running to test
 # figure out how to handle login on android
 # set up short cut on desktop, android
-# test time zones using remote api
 # load data to prod system from ~/appengine/python_apps/sfschoolhouse.db
 # need to ensure accessed as attendance.sfschoolhouse.org if logged in as a schoolhouse.org user
 # allow anyone to test Music, Football, etc. on appspot.com
@@ -41,13 +40,33 @@ from pytz import utc
 from google.appengine.dist import use_library
 use_library('django', '1.2')
 
+class Authorize():
+
+  def __init__(self):
+    self.user = users.get_current_user()
+
+  def authorize(self):
+    name, user_domain = self.user.email().split('@')
+    namespace = namespace_manager.get_namespace()
+    if not namespace:
+      # namespace will be an empty string if not an apps domain
+      # can be used with the test data
+      return True
+    elif namespace == user_domain:
+      # if an apps domain, then the user must be a member of the domain
+      return True
+    else:
+      return False
+
+  def get_name(self):
+    return self.user.nickname()
+
 
 class Classes(webapp.RequestHandler):
+
   def get(self):
-    user = users.get_current_user()
-    name, user_domain = user.email().split('@')
-    namespace = namespace_manager.get_namespace()
-    if user_domain != 'example.com' and namespace_manager.get_namespace() != user_domain:
+    authz = Authorize()
+    if not authz.authorize():
       self.error(403)
       return
     query = Class.query()
@@ -56,7 +75,7 @@ class Classes(webapp.RequestHandler):
     for the_class in classes:
       the_class.id = the_class.key.id()
     template_values = { 'classes': classes,
-                        'username': user.nickname(),
+                        'username': authz.get_name(),
                         'logout': users.create_logout_url("/") }
     path = os.path.join(os.path.dirname(__file__), 'templates/classes.html')
     self.response.out.write(template.render(path, template_values))
@@ -73,8 +92,8 @@ class Students(webapp.RequestHandler):
 
   def get(self):
     user = users.get_current_user()
-    name, user_domain = user.email().split('@')
-    if user_domain != 'example.com' and namespace_manager.get_namespace() != user_domain:
+    authz = Authorize()
+    if not authz.authorize():
       self.error(403)
       return
     class_id = self.request.get('class_id')
@@ -82,6 +101,7 @@ class Students(webapp.RequestHandler):
     the_class = class_key.get()
     the_class.id = the_class.key.id()
     date_ordinal = self.request.get('date')
+    errmsg = self.request.get('errmsg')
     today_as_ordinal = self.today_as_ordinal(the_class.timezone)
     if not date_ordinal:
       date_ordinal = today_as_ordinal
@@ -109,8 +129,8 @@ class Students(webapp.RequestHandler):
                         'today': today,
                         'class': the_class,
                         'date_struct': date_struct,
-                        'username': user.nickname(),
-                        'logout': users.create_logout_url("/") }
+                        'username': authz.get_name(),
+                        'errmsg': errmsg }
     path = os.path.join(os.path.dirname(__file__), 'templates/students.html')
     self.response.out.write(template.render(path, template_values))
 
@@ -147,8 +167,8 @@ class Attend(webapp.RequestHandler):
 
   def post(self):
     user = users.get_current_user()
-    name, user_domain = user.email().split('@')
-    if user_domain != 'example.com' and namespace_manager.get_namespace() != user_domain:
+    authz = Authorize()
+    if not authz.authorize():
       self.error(403)
       return
     yes = self.request.get('yes')
@@ -166,23 +186,28 @@ class Attend(webapp.RequestHandler):
       attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
       attendance = attendance_key.get()
       attendance_already_exists = False
-      if attendance:
-        attendance_already_exists = True
-        if yes:
-          self.add_student(student_key, hours, attendance.attending)
+      try:
+        if attendance:
+          attendance_already_exists = True
+          if yes:
+            self.add_student(student_key, hours, attendance.attending)
+          else:
+            self.remove_student(student_key, attendance.attending)
         else:
-          self.remove_student(student_key, attendance.attending)
-      else:
-        if yes:
-          attendance = Attendance(key=attendance_key, attending=[])
-          self.add_student(student_key, hours, attendance.attending)
+          if yes:
+            attendance = Attendance(key=attendance_key, attending=[])
+            self.add_student(student_key, hours, attendance.attending)
+      except ValueError:
+        # hours was not a float
+        self.redirect('/students?class_id=%s&date=%s&errmsg=Invalid%%20value%%20for%%20hours' % (class_id, date_ordinal))
+        return
     if attendance:
       if yes:
         status = "present"
       else:
         status = "absent"
       logging.info('Change by %s: %s %s marked as %s for %s' % 
-                   (user.nickname(), student.first_name, student.last_name, status, the_class.name))
+                   (authz.get_name(), student.first_name, student.last_name, status, the_class.name))
     if attendance.attending:
       attendance.put()
     elif attendance_already_exists:
