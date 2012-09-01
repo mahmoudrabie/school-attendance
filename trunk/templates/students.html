@@ -30,19 +30,36 @@
         <td>
           {{ student.first_name }} {{ student.last_name }}
         </td>
+        {% if today %}
+          <form action="/attend" method="POST">
+        {% endif %}
+	{% if class.default_hours %}
+          {% if today %}
+   	    <td>
+              {% if student.present %}
+              <input class="input_present" type="text" size="1" name="hours" maxlength="3" value="{{ student.hours }}">
+              {% else %}
+              <input class="input_absent" type="text" size="1" name="hours" maxlength="3" value="{{ student.hours }}">
+              {% endif %}
+
+            </td>
+	   {% else %}
+             <td>
+	       {{ student.hours }}
+	     </td>
+           {% endif %}
+        {% endif %}
 	<td>
           {% if today %}
-          <form action="/attend" method="POST">
 	    <input type="hidden" name="date" value="{{ date_ordinal }}">
             <input type="hidden" name="class_id" value="{{ class.id }}">
 	    <input type="hidden" name="student_id" value="{{ student.id }}">
 	    {% if student.present %}
-            <input type="submit" name="no" value="X">
-	    {% else %}
-            <input type="submit" name="yes" value="&#x2713;">
-	    {% endif %}
-
-	  </form>
+              <input type="submit" name="no" value="X">
+            {% else %}
+              <input type="submit" name="yes" value="&#x2713;">
+            {% endif %}
+            </form>
           {% endif %} 
        </td>
       </tr>
