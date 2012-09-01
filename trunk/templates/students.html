@@ -7,19 +7,23 @@
     <form action="/students" method="GET">
     <input type="hidden" name="class_id" value="{{ class.id }}">
     <input type="hidden" name="date" value="{{ date_ordinal|add:"-1" }}">
-    <input type="submit" value="&lt;">
+    <input type="submit" value=" &lt; ">
     </form>
     {{ date_struct|date:"D d M Y" }}
     {% if not today %}
     <form action="/students" method="GET">
     <input type="hidden" name="class_id" value="{{ class.id }}">
     <input type="hidden" name="date" value="{{ date_ordinal|add:"1" }}">
-    <input type="submit" value="&gt;">
+    <input type="submit" value=" &gt; ">
     </form>
     {% endif %}
     <br/>
 
     <h2>Class: {{class.name }}</h2>
+
+    {% if errmsg %}
+    <p class="errmsg">{{ errmsg }}</p>
+    {% endif %}
     <table>
     {% for student in students %}
       {% if student.present %}
@@ -55,9 +59,9 @@
             <input type="hidden" name="class_id" value="{{ class.id }}">
 	    <input type="hidden" name="student_id" value="{{ student.id }}">
 	    {% if student.present %}
-              <input type="submit" name="no" value="X">
+              <input type="submit" name="no" value=" X ">
             {% else %}
-              <input type="submit" name="yes" value="&#x2713;">
+              <input type="submit" name="yes" value=" &#x2713; ">
             {% endif %}
             </form>
           {% endif %} 
