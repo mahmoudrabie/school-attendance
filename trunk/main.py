@@ -206,8 +206,8 @@ class Attend(webapp.RequestHandler):
         status = "present"
       else:
         status = "absent"
-      logging.info('Change by %s: %s %s marked as %s for %s' % 
-                   (authz.get_name(), student.first_name, student.last_name, status, the_class.name))
+      logging.info('Change by %s: %s %s marked as %s for %s (hours: %s)' % 
+                   (authz.get_name(), student.first_name, student.last_name, status, the_class.name, hours))
     if attendance.attending:
       attendance.put()
     elif attendance_already_exists:
