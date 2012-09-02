@@ -9,6 +9,10 @@ handlers:
   static_files: static/images/school-bell-favicon.ico
   upload: static/images/school-bell-favicon.ico
 
+- url: /apple-touch-icon.png
+  static_files: static/images/school-bell-favicon.ico
+  upload: static/images/school-bell-favicon.ico
+
 - url: /attendance.css
   static_files: static/css/attendance.css
   upload: static/css/attendance.css
