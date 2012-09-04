@@ -18,6 +18,11 @@
 #  - Parents work every other week, so complex schedules.
 #  - Kids need to be marked if parent attended, since different price
 # allow admins to change attendance for other days
+# use provisioning API to get groups (e.g. classes)
+# check ereporter is working
+# check what happens if call attend with date in future or past (should be an error)
+# is there a way to scan in paper to the system
+
 import os
 import datetime
 import logging
@@ -165,7 +170,7 @@ class Attend(webapp.RequestHandler):
           attending_list.remove(student_present)
           break
 
-  def post(self):
+  def get(self):
     user = users.get_current_user()
     authz = Authorize()
     if not authz.authorize():
