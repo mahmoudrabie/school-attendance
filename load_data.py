@@ -16,38 +16,7 @@ use_library('django', '1.2')
 
 class LoadSFSchoolhouse(webapp.RequestHandler):
   def get(self):
-    user = users.get_current_user()
-    namespace_manager.set_namespace('sfschoolhouse.org')
-    students = ['Bridget Adams',
-                'Garrett Adams',
-                'Eden Beharav',
-                'Ryan Bram',
-                'Everett Carvalho',
-                'Joely Cherniss',
-                'Stella Cherniss',
-                'Annabel Cooney',
-                'Brahm Dake',
-                'Moselle Dake',
-                'Shree Gurung',
-                'Kai Koshio',
-                'Thomas Lowry',
-                'Cleo Pels',
-                'Noah Philipp',
-                'Iris McKee',
-                'Ryder Villaroman',
-                'Henry Walen',]
-    student_list = []
-    for name in students:
-      first_name, last_name = name.split()
-      student = Student(first_name=first_name, last_name=last_name)
-      student_key = student.put()
-      student_list.append(student_key)
-    k2 = Class(name='K-2 2012-13', enrolled=student_list)
-    k2.put()
-    after_school = Class(name='After-school 2012-13', enrolled=student_list, default_hours=3.5)
-    after_school.put()
-    self.response.out.write('done')
-
+    pass
 
 class LoadTest(webapp.RequestHandler):
   def get(self):

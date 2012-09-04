@@ -23,10 +23,6 @@ td {
   color: gray;
   font-size: 150%;
 }
-.input_present {
-  font-weight: bold;
-  font-size: 150%;
-}
 .errmsg {
   color: red;
   font-size: 150%;

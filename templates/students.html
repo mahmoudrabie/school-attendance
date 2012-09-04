@@ -36,17 +36,16 @@
           {{ student.first_name }} {{ student.last_name }}
         </td>
         {% if today %}
-          <form action="/attend" method="POST">
+          <form action="/attend" method="GET">
         {% endif %}
 	{% if class.default_hours %}
           {% if today %}
    	    <td>
               {% if student.present %}
-              <input class="input_present" type="text" size="1" name="hours" maxlength="3" value="{{ student.hours }}">
+                {{ student.hours }}
               {% else %}
-              <input class="input_absent" type="text" size="1" name="hours" maxlength="3" value="{{ student.hours }}">
+                <input class="input_absent" type="text" size="1" name="hours" maxlength="3" value="{{ student.hours }}">
               {% endif %}
-
             </td>
 	   {% else %}
              <td>
