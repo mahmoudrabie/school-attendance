@@ -22,7 +22,8 @@
 # check ereporter is working
 # check what happens if call attend with date in future or past (should be an error)
 # is there a way to scan in paper to the system
-
+# need a web clip for chrome on iphone (or auto-login for safari)
+# set up chrome bookmark, web clip on mobiles, desktops. 
 import os
 import datetime
 import logging
