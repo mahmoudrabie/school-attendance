@@ -220,13 +220,59 @@ class Attend(webapp.RequestHandler):
       attendance_key.delete()
     self.redirect('/students?class_id=%s&date=%s' % (class_id, date_ordinal))
 
+
 class Logout(webapp.RequestHandler):
   def get(self):
     self.response.out.write('<a href="' + users.create_logout_url("/") + '">logout</a>')
 
 
+class Export(webapp.RequestHandler):
+  def get(self):
+    user = users.get_current_user()
+    authz = Authorize()
+    if not authz.authorize():
+      self.error(403)
+      return
+    self.response.headers['Content-Type'] = 'text/plain'
+    class_id = self.request.get('class_id')
+    class_key = ndb.Key('Class', int(class_id))
+    the_class = class_key.get()
+    enrolled = the_class.enrolled
+    all_students = {}
+    self.response.out.write(',')
+    for student_key in enrolled:
+      if student_key not in all_students:
+        the_student = student_key.get()
+        all_students[student_key] = the_student
+        self.response.out.write('%s %s,' % (the_student.first_name, the_student.last_name))
+    self.response.out.write('\n')
+
+    qry = Attendance.query(ancestor=class_key).order(Attendance.key)
+    attendance = qry.fetch(200)
+    for the_attendance in attendance:
+      the_attendance_key = the_attendance.key
+      date_ordinal = the_attendance_key.id()
+      date_struct = datetime.date.fromordinal(int(date_ordinal))
+      date_str = date_struct.isoformat()
+      self.response.out.write('%s,' % (date_str))
+      students = the_attendance.attending
+      attending_students = {}
+      for student in students:
+        student_key = student.student
+        attending_students[student_key] = student.hours
+      for the_enrolled in enrolled:
+        if the_enrolled in attending_students:
+          output = attending_students[the_enrolled]
+          if not output: output = 1
+          self.response.out.write('%s,' % (output))
+        else:
+          self.response.out.write(',')
+      self.response.out.write('\n')
+    
+
 application = webapp.WSGIApplication(
-  [('/classes', Classes), ('/students', Students), ('/attend', Attend), ('/logout', Logout),],
+  [('/classes', Classes), ('/students', Students), ('/attend', Attend), ('/logout', Logout),
+   ('/export', Export),],
   debug=True)
 
 def main():
