@@ -78,7 +78,7 @@ class Attend(webapp2.RequestHandler):
             else:
               students = ndb.get_multi(the_class.enrolled)
               for student in students:
-                self.add_student(student, hours, attendance.attending)
+                self.add_student(student.key, hours, attendance.attending)
           else:
             self.remove_student(student_key, attendance.attending)
         else:
@@ -89,7 +89,7 @@ class Attend(webapp2.RequestHandler):
             else:
               students = ndb.get_multi(the_class.enrolled)
               for student in students:
-                self.add_student(student, hours, attendance.attending)
+                self.add_student(student.key, hours, attendance.attending)
 
       except ValueError:
         # hours was not a float

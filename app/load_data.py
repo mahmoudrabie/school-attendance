@@ -1,8 +1,9 @@
+import webapp2
+
 from google.appengine.ext import ndb
-from google.appengine.ext import webapp
 from google.appengine.api import users
 from google.appengine.api import namespace_manager
-from google.appengine.ext.webapp.util import run_wsgi_app
+
 
 from models import Student
 from models import Class
@@ -10,15 +11,11 @@ from models import Attendance
 from models import StudentPresent
 
 
-from google.appengine.dist import use_library
-use_library('django', '1.2')
-
-
-class LoadSFSchoolhouse(webapp.RequestHandler):
+class LoadSFSchoolhouse(webapp2.RequestHandler):
   def get(self):
     pass
 
-class LoadTest(webapp.RequestHandler):
+class LoadTest(webapp2.RequestHandler):
   def get(self):
     user = users.get_current_user()
     namespace_manager.set_namespace('')
@@ -63,12 +60,6 @@ class LoadTest(webapp.RequestHandler):
     detention.put()
     self.response.out.write('done')
 
-application = webapp.WSGIApplication(
+app = webapp2.WSGIApplication(
   [('/load/sfschoolhouse', LoadSFSchoolhouse), ('/load/test', LoadTest), ],
   debug=True)
-
-def main():
-  run_wsgi_app(application)
-
-if __name__ == "__main__":
-    main()
