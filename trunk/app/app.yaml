@@ -1,7 +1,8 @@
 application: school-attendance-dev
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: no
 
 handlers:
 
@@ -26,7 +27,7 @@ handlers:
   login: admin
 
 - url: /load/.*
-  script: load_data.py
+  script: load_data.app
   login: admin
 
 - url: /attend
@@ -34,7 +35,7 @@ handlers:
   login: required
 
 - url: /.*
-  script: main.py
+  script: main.app
   login: required
 
 builtins:

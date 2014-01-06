@@ -1,4 +1,5 @@
 # todo
+# do not display old classes, students that left
 # reporting interface - cron job to export to a spreadsheet
 # http://code.google.com/p/gdata-python-client/source/browse/#hg%2Fsamples%2Foauth%2Foauth_on_appengine%253Fstate%253Dclosed
 # Use closure to do ajax instead of attend post
@@ -27,14 +28,14 @@
 import os
 import datetime
 import logging
+import webapp2
 
 from google.appengine.ext import ndb
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext.webapp import template
 from google.appengine.api import users
 from google.appengine.api import namespace_manager
 
+from authorize import Authorize
 from models import Attendance
 from models import Class
 from models import Student
@@ -43,11 +44,8 @@ from models import StudentPresent
 from pytz import timezone
 from pytz import utc
 
-from google.appengine.dist import use_library
-use_library('django', '1.2')
 
-
-class Classes(webapp.RequestHandler):
+class Classes(webapp2.RequestHandler):
 
   def get(self):
     authz = Authorize()
@@ -66,7 +64,7 @@ class Classes(webapp.RequestHandler):
     self.response.out.write(template.render(path, template_values))
 
 
-class Students(webapp.RequestHandler):
+class Students(webapp2.RequestHandler):
 
   def today_as_ordinal(self, the_timezone):
     naive_time = datetime.datetime.now()
@@ -120,12 +118,13 @@ class Students(webapp.RequestHandler):
     self.response.out.write(template.render(path, template_values))
 
 
-class Logout(webapp.RequestHandler):
+class Logout(webapp2.RequestHandler):
   def get(self):
     self.response.out.write('<a href="' + users.create_logout_url("/") + '">logout</a>')
 
-
-class Export(webapp.RequestHandler):
+# TODO: this breaks if we remove someone from enrolled.
+# Sadly, there is no deleted field in enrolled.
+class Export(webapp2.RequestHandler):
   def get(self):
     user = users.get_current_user()
     authz = Authorize()
@@ -169,13 +168,8 @@ class Export(webapp.RequestHandler):
       self.response.out.write('\n')
     
 
-application = webapp.WSGIApplication(
-  [('/classes', Classes), ('/students', Students), ('/attend', Attend), ('/logout', Logout),
+app = webapp2.WSGIApplication(
+  [('/classes', Classes), ('/students', Students), ('/logout', Logout),
    ('/export', Export),],
   debug=True)
 
-def main():
-    run_wsgi_app(application)
-
-if __name__ == "__main__":
-    main()
