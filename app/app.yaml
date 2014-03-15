@@ -1,10 +1,13 @@
 application: school-attendance-dev
-version: 1
+version: endpoints-dev
 runtime: python27
 api_version: 1
 threadsafe: no
 
 handlers:
+
+- url: /_ah/spi/.*
+  script: attendance_api.application
 
 - url: /favicon.ico
   static_files: static/images/school-bell-favicon.ico
@@ -13,6 +16,15 @@ handlers:
 - url: /apple-touch-icon.png
   static_files: static/images/school-bell-favicon.ico
   upload: static/images/school-bell-favicon.ico
+
+- url: /css
+  static_dir: static/css
+
+- url: /js
+  static_dir: static/js
+
+- url: /html
+  static_dir: static/html
 
 - url: /attendance.css
   static_files: static/css/attendance.css
@@ -41,3 +53,6 @@ handlers:
 builtins:
 - remote_api: on
 
+libraries:
+- name: endpoints
+  version: 1.0
