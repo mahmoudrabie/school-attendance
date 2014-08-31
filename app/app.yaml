@@ -1,5 +1,5 @@
-application: school-attendance-dev
-version: endpoints-dev
+application: s~school-attendance
+version: 28p
 runtime: python27
 api_version: 1
 threadsafe: no
