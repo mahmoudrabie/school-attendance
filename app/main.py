@@ -107,10 +107,14 @@ class Students(webapp2.RequestHandler):
             student.present = True
             student.hours = student_present.hours
             break
+    
+    school = namespace_manager.google_apps_namespace()
+    if not school: school = 'Test school'
     template_values = { 'students': students,
                         'date_ordinal': date_ordinal,
                         'today': today,
                         'class': the_class,
+                        'school': school,
                         'date_struct': date_struct,
                         'username': authz.get_name(),
                         'errmsg': errmsg }

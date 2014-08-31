@@ -1,29 +1,8 @@
 body {
-  font-family: arial;
-  font-size: 250%;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
-form {
-  display: inline;
-}
-.absent {
-  color: gray;
-  font-size: 250%;
-}
-.present {
-  font-weight: bold;
-  font-size: 250%;
-}
-input {
-  font-size: 150%;
-}
-td {
-  padding: 10px;
-}
-.input_absent {
-  color: gray;
-  font-size: 150%;
-}
-.errmsg {
-  color: red;
-  font-size: 150%;
+
+.navbar {
+  margin-bottom: 20px;
 }

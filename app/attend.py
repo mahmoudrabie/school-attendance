@@ -52,7 +52,7 @@ class Attend(webapp2.RequestHandler):
       self.error(403)
       return
     # get the form input
-    yes = self.request.get('yes')
+    yes = int(self.request.get('yes'))
     class_id = self.request.get('class_id')
     student_id = self.request.get('student_id')
     if student_id:
@@ -65,6 +65,7 @@ class Attend(webapp2.RequestHandler):
     hours = self.request.get('hours')
     today_as_ordinal = self.today_as_ordinal(the_class.timezone)
     # can only edit attendance for today
+    attendance = None
     if int(date_ordinal) == today_as_ordinal:
       attendance_key = ndb.Key('Class', int(class_id), 'Attendance', int(date_ordinal))
       attendance = attendance_key.get()
@@ -102,7 +103,6 @@ class Attend(webapp2.RequestHandler):
         status = "absent"
       logging.info('Change by %s: %s %s marked as %s for %s (hours: %s)' % 
                    (authz.get_name(), student.first_name, student.last_name, status, the_class.name, hours))
-    if attendance.attending:
       attendance.put()
     elif attendance_already_exists:
       attendance_key.delete()
