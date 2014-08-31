@@ -1,52 +1,104 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ class.name }}</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+    <!-- custom styles for this app -->
     <link rel="stylesheet" type="text/css" href="/attendance.css" />
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
   </head>
+
   <body>
-    User: {{ username }}<br/>
-    <form action="/students" method="GET">
-    <input type="hidden" name="class_id" value="{{ class.id }}">
-    <input type="hidden" name="date" value="{{ date_ordinal|add:"-1" }}">
-    <input type="submit" value=" &lt; ">
-    </form>
+
+    <div class="container">
+
+      <!-- Static navbar -->
+      <div class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/classes">{{ school }} attendance</a>
+          </div>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li><a href="#">{{ class.name }}</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="../navbar-fixed-top/">{{ username }}</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div><!--/.container-fluid -->
+      </div>
+
+
+<form id="previous" action="/students" method="GET">
+  <input type="hidden" name="class_id" value="{{ class.id }}">
+  <input type="hidden" name="date" value="{{ date_ordinal|add:"-1" }}">
+</form>
+
+<form id="next" action="/students" method="GET">
+  <input type="hidden" name="class_id" value="{{ class.id }}">
+  <input type="hidden" name="date" value="{{ date_ordinal|add:"1" }}">
+</form>
+
+<button form="previous" class="btn btn-default" type="submit">
+  <span class="glyphicon glyphicon-chevron-left"></span> Previous
+</button>
+
     {{ date_struct|date:"D d M Y" }}
     {% if not today %}
-    <form action="/students" method="GET">
-    <input type="hidden" name="class_id" value="{{ class.id }}">
-    <input type="hidden" name="date" value="{{ date_ordinal|add:"1" }}">
-    <input type="submit" value=" &gt; ">
-    </form>
     {% endif %}
-    <br/>
 
-    <h2>Class: {{class.name }}</h2>
+<button form="next" class="btn btn-default" type="submit">
+  Next <span class="glyphicon glyphicon-chevron-right"></span>
+</button>
+
 
     {% if errmsg %}
     <p class="errmsg">{{ errmsg }}</p>
     {% endif %}
+
     <table>
-      <tr class="present">
+      <tr>
          <td>&nbsp</td>
 	 <td>
-           <form action="/attend" method="GET">
+           <form action="/attend" method="GET" id="all-attending">
  	     <input type="hidden" name="date" value="{{ date_ordinal }}">
              <input type="hidden" name="class_id" value="{{ class.id }}">
-             <input type="submit" name="yes" value=" &#x2713; ">
            </form>
+           <button type="submit" class="btn btn-primary" form="all-attending" name="yes" value="1">Mark all attending</button>
+
          </td>
       </tr>
+
       {% for student in students %}
       {% if student.present %}
-      <tr class="present">
+      <tr>
       {% else %}
-      <tr class="absent">
+      <tr>
       {% endif %}
         <td>
           {{ student.first_name }} {{ student.last_name }}
         </td>
         {% if today %}
-          <form action="/attend" method="GET">
+          <form action="/attend" method="GET" id="student{{ student.id }}">
         {% endif %}
 	{% if class.default_hours %}
           {% if today %}
@@ -69,9 +121,9 @@
             <input type="hidden" name="class_id" value="{{ class.id }}">
 	    <input type="hidden" name="student_id" value="{{ student.id }}">
 	    {% if student.present %}
-              <input type="submit" name="no" value=" X ">
+	      <button type="submit" class="btn btn-primary" form="student{{ student.id }}" name="yes" value="0">Present</button>
             {% else %}
-              <input type="submit" name="yes" value=" &#x2713; ">
+              <button type="submit" class="btn btn-default" form="student{{ student.id }}" name="yes" value="1">Absent</button>
             {% endif %}
             </form>
           {% endif %} 
@@ -79,5 +131,8 @@
       </tr>
     {% endfor %}
     </table>
+
+    </div> <!-- /container -->
+
   </body>
 </html>

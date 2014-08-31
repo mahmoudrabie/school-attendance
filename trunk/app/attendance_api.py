@@ -3,6 +3,7 @@
 import datetime
 import endpoints
 import logging
+import os
 
 from google.appengine.api import namespace_manager
 from google.appengine.ext import ndb
@@ -71,9 +72,15 @@ class AttendanceAPI(remote.Service):
       An instance of message_types.VoidMessage.
     """
     current_user = endpoints.get_current_user()
-    if current_user is None:
-      raise endpoints.UnauthorizedException('Invalid token.')
-    domain = current_user.email().split('@')[1]
+    app_id = os.environ['APPLICATION_ID']
+    if app_id.startswith('dev~') or app_id == 'testbed-test':
+      email = 'test@gmail.com'
+    else:
+      if current_user is None:
+        raise endpoints.UnauthorizedException('Invalid token.')
+      email = current_user.email()
+
+    domain = email.split('@')[1]
     if domain == 'gmail.com': domain = ''
     namespace_manager.set_namespace(domain)
 
@@ -97,7 +104,7 @@ class AttendanceAPI(remote.Service):
 
     logging.info('Updating class: %s student: %s date: %s user: %s attend: %s' % 
                  (classname.name, request.student, request.date, 
-                  current_user.email(), request.attended))
+                  email, request.attended))
 
     attendance_key = ndb.Key('Class', request.classname, 
                              'Attendance', request.date)
