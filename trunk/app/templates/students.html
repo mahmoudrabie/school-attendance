@@ -75,7 +75,9 @@
     <p class="errmsg">{{ errmsg }}</p>
     {% endif %}
 
-    <table>
+    <table class="table">
+
+      {% if today %}
       <tr>
          <td>&nbsp</td>
 	 <td>
@@ -87,6 +89,7 @@
 
          </td>
       </tr>
+      {% endif %}
 
       {% for student in students %}
       {% if student.present %}
