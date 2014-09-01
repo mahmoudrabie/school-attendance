@@ -57,7 +57,10 @@ class Classes(webapp2.RequestHandler):
     classes = query.fetch(50)
     for the_class in classes:
       the_class.id = the_class.key.id()
+    school = namespace_manager.google_apps_namespace()
+    if not school: school = 'Test school'
     template_values = { 'classes': classes,
+                        'school': school,
                         'username': authz.get_name(),
                         'logout': users.create_logout_url("/") }
     path = os.path.join(os.path.dirname(__file__), 'templates/classes.html')
