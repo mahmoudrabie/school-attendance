@@ -1,0 +1,1 @@
+A simple web app that runs on App Engine which allows you to mark whether a student attends a class. Optimized to run on a mobile phone.
